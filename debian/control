@@ -10,6 +10,7 @@ Homepage: <insert the upstream URL, if relevant>
 
 Package: 7digital-mono
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+#Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: libglib2.0-dev
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
