@@ -12,6 +12,7 @@ cd $MONO_DIR
 pwd
 echo $TARGET_DIR
 ./configure --prefix=$TARGET_DIR
+make
 make install
 cd -
 
