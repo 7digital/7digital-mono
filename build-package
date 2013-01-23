@@ -16,7 +16,8 @@ make
 make install
 cd -
 
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/*
+sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/mcs
+sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/xbuild
 
 dpkg-buildpackage -uc -us -b
 
