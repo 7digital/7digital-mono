@@ -16,7 +16,7 @@ make
 make install
 cd -
 
-sed -i "s/\/home\/hibri\/projects\/7digital-mono\/mono/\/usr/g" TARGET_DIR/bin/*
+sed -i "s/`pwd`\/mono''/\/usr/g" TARGET_DIR/bin/*
 
 dpkg-buildpackage -uc -us -b
 
