@@ -1,4 +1,6 @@
 #! /bin/bash
+set -e
+
 MONO_VERSION=$1
 MONO_DIR="mono-$MONO_VERSION"
 echo "Downloading $MONO_VERSION"
