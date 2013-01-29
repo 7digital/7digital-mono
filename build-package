@@ -1,6 +1,13 @@
 #! /bin/bash
 set -e
 
+die () {
+    echo >&2 "$@"
+    exit 1
+}
+
+[ "$#" -eq 1 ] || die "Please specify the version of Mono you want to build as the argument. (Check the tarball list here: http://download.mono-project.com/sources/mono/)"
+
 MONO_VERSION=$1
 MONO_DIR="mono-$MONO_VERSION"
 echo "Downloading $MONO_VERSION"
