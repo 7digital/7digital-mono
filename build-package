@@ -22,7 +22,7 @@ if [ "$MONO_VERSION" = "3.0.3" ]
 then
 	git clone git://gitorious.7digital.local/sevendigital-api-inbox/deployment.git
 	echo --patching mono
-	cd $MONO_DIR && patch -p1 -i ../deployment/server/0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd .. && rm -rf deployment
+	cd $MONO_DIR && patch -p1 -i ../deployment/bootstrap/0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd .. && rm -rf deployment
 fi
 
 cd $MONO_DIR
