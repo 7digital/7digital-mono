@@ -35,6 +35,9 @@ cd -
 
 sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/mcs
 sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/xbuild
+sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console
+sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console2
+sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console4
 
 dpkg-buildpackage -uc -us -b
 
