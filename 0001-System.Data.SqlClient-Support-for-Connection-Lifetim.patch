@@ -1,0 +1,421 @@
+From 5a63639e3d9651ac158da4748c47f2d3e5aa246e Mon Sep 17 00:00:00 2001
+From: james lewis <james.lewis@7digital.com>
+Date: Wed, 5 Dec 2012 12:13:57 +0000
+Subject: [PATCH] [System.Data.SqlClient] Support for "Connection Lifetime"
+ parameter
+
+Adding support for "Connection Lifetime" parameter in connection strings.
+This is especially fundamental in this scenario:
+- Pooling is ON because the app is in constant reception of requests.
+- Loadbalancer is switched to point to a new database.
+- Mono needs to discard the connections that are too old (marked by lifetime)
+in order to create new ones, that will connect to the new DB.
+
+It includes a unit test in Mono.Data.Tds testing assembly.
+
+Patch contributed under the terms by the X11/MIT license, by:
+James Lewis <james.lewis@7digital.com>
+Andres G. Aragoneses <andres@7digital.com>
+---
+ .../Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds.cs    |   26 ++++-
+ .../Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds70.cs  |   10 +-
+ .../Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds80.cs  |    6 +-
+ .../Mono.Data.Tds.Protocol/TdsConnectionPool.cs    |   10 +-
+ .../Mono.Data.Tds/Mono.Data.Tds_test.dll.sources   |    1 +
+ mcs/class/Mono.Data.Tds/Test/ConnLifetime.cs       |  113 ++++++++++++++++++++
+ mcs/class/Mono.Data.Tds/Test/bug-4786.cs           |    4 +-
+ .../System.Data.SqlClient/SqlConnection.cs         |    7 +-
+ configure.in                                       |    2 +-
+ mono/mini/driver.c                                 |    2 +-
+ 10 files changed, 161 insertions(+), 20 deletions(-)
+ create mode 100644 mcs/class/Mono.Data.Tds/Test/ConnLifetime.cs
+
+diff --git a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds.cs b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds.cs
+index 76a810a..214afcf 100644
+--- a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds.cs
++++ b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds.cs
+@@ -64,6 +64,9 @@ namespace Mono.Data.Tds.Protocol
+ 		int databaseMajorVersion;
+ 		CultureInfo locale = CultureInfo.InvariantCulture;
+ 
++		readonly int lifeTime;
++		readonly DateTime created = DateTime.Now;
++
+ 		string charset;
+ 		string language;
+ 
+@@ -147,7 +150,7 @@ namespace Mono.Data.Tds.Protocol
+ 			get { return dataSource; }
+ 		}
+ 
+-		public bool IsConnected {
++		public virtual bool IsConnected {
+ 			get { return connected && comm != null && comm.IsConnected (); }
+ 			set { connected = value; }
+ 		}
+@@ -416,12 +419,23 @@ namespace Mono.Data.Tds.Protocol
+ 		#region Constructors
+ 
+ 		public Tds (string dataSource, int port, int packetSize, int timeout, TdsVersion tdsVersion)
++			: this  (dataSource, port, packetSize, timeout, 0, tdsVersion)
++		{
++		}
++
++		public Tds (string dataSource, int port, int packetSize, int timeout, int lifeTime, TdsVersion tdsVersion)
+ 		{
+ 			this.tdsVersion = tdsVersion;
+ 			this.packetSize = packetSize;
+ 			this.dataSource = dataSource;
+ 			this.columns = new TdsDataColumnCollection ();
++			this.lifeTime = lifeTime;
++
++			InitComm (port, timeout);
++		}
+ 
++		protected virtual void InitComm (int port, int timeout)
++		{
+ 			comm = new TdsComm (dataSource, port, packetSize, timeout, tdsVersion);
+ 		}
+ 
+@@ -429,6 +443,14 @@ namespace Mono.Data.Tds.Protocol
+ 
+ 		#region Public Methods
+ 
++		internal bool Expired {
++			get {
++				if (lifeTime == 0)
++					return false;
++				return DateTime.Now > (created + TimeSpan.FromSeconds (lifeTime));
++			}
++		}
++
+ 		internal protected void InitExec () 
+ 		{
+ 			// clean up
+@@ -477,7 +499,7 @@ namespace Mono.Data.Tds.Protocol
+ 			return new TdsTimeoutException (0, 0, message, -2, method, dataSource, "Mono TdsClient Data Provider", 0);
+ 		}
+ 
+-		public void Disconnect ()
++		public virtual void Disconnect ()
+ 		{
+ 			try {
+ 				comm.StartPacket (TdsPacketType.Logoff);
+diff --git a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds70.cs b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds70.cs
+index f111b35..7a0252f 100644
+--- a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds70.cs
++++ b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds70.cs
+@@ -55,17 +55,17 @@ namespace Mono.Data.Tds.Protocol
+ 		#region Constructors
+ 
+ 		public Tds70 (string server, int port)
+-			: this (server, port, 512, 15)
++			: this (server, port, 512, 15, 0)
+ 		{
+ 		}
+ 
+-		public Tds70 (string server, int port, int packetSize, int timeout)
+-			: base (server, port, packetSize, timeout, TdsVersion.tds70)
++		public Tds70 (string server, int port, int packetSize, int timeout, int lifeTime)
++			: base (server, port, packetSize, timeout, lifeTime, TdsVersion.tds70)
+ 		{
+ 		}
+ 
+-		public Tds70 (string server, int port, int packetSize, int timeout, TdsVersion version)
+-			: base (server, port, packetSize, timeout, version)
++		public Tds70 (string server, int port, int packetSize, int timeout, int lifeTime, TdsVersion version)
++			: base (server, port, packetSize, timeout, lifeTime, version)
+ 		{
+ 		}
+ 		
+diff --git a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds80.cs b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds80.cs
+index 8d03305..77431c5 100644
+--- a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds80.cs
++++ b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/Tds80.cs
+@@ -45,12 +45,12 @@ namespace Mono.Data.Tds.Protocol {
+ 		#region Constructors
+ 
+ 		public Tds80 (string server, int port)
+-			: this (server, port, 512, 15)
++			: this (server, port, 512, 15, 0)
+ 		{
+ 		}
+ 
+-		public Tds80 (string server, int port, int packetSize, int timeout)
+-			: base (server, port, packetSize, timeout, Version)
++		public Tds80 (string server, int port, int packetSize, int timeout, int lifeTime)
++			: base (server, port, packetSize, timeout, lifeTime, Version)
+ 		{
+ 		}
+ 
+diff --git a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/TdsConnectionPool.cs b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/TdsConnectionPool.cs
+index 4d43d7e..8ffaa03 100644
+--- a/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/TdsConnectionPool.cs
++++ b/mcs/class/Mono.Data.Tds/Mono.Data.Tds.Protocol/TdsConnectionPool.cs
+@@ -72,9 +72,9 @@ namespace Mono.Data.Tds.Protocol
+ 				case TdsVersion.tds50:
+ 					return new Tds50 (info.DataSource, info.Port, info.PacketSize, info.Timeout);
+ 				case TdsVersion.tds70:
+-					return new Tds70 (info.DataSource, info.Port, info.PacketSize, info.Timeout);
++					return new Tds70 (info.DataSource, info.Port, info.PacketSize, info.Timeout, info.LifeTime);
+ 				case TdsVersion.tds80:
+-					return new Tds80 (info.DataSource, info.Port, info.PacketSize, info.Timeout);
++					return new Tds80 (info.DataSource, info.Port, info.PacketSize, info.Timeout, info.LifeTime);
+ 			}
+ 			throw new NotSupportedException ();
+ 		}
+@@ -87,7 +87,7 @@ namespace Mono.Data.Tds.Protocol
+ 	
+ 	public class TdsConnectionInfo
+ 	{
+-		public TdsConnectionInfo (string dataSource, int port, int packetSize, int timeout, int minSize, int maxSize)
++		public TdsConnectionInfo (string dataSource, int port, int packetSize, int timeout, int minSize, int maxSize, int lifeTime)
+ 		{
+ 			DataSource = dataSource;
+ 			Port = port;
+@@ -95,12 +95,14 @@ namespace Mono.Data.Tds.Protocol
+ 			Timeout = timeout;
+ 			PoolMinSize = minSize;
+ 			PoolMaxSize = maxSize;
++			LifeTime = lifeTime;
+ 		}
+ 		
+ 		public string DataSource;
+ 		public int Port;
+ 		public int PacketSize;
+ 		public int Timeout;
++		public int LifeTime;
+ 		public int PoolMinSize;
+ 		public int PoolMaxSize;
+ 
+@@ -239,7 +241,7 @@ retry:
+ 				return;
+ 			}
+ 
+-			if (connection.poolStatus == 2) {
++			if (connection.poolStatus == 2 || connection.Expired) {
+ 				lock (conns)
+ 					conns.Remove (connection);
+ 				connection.Disconnect ();
+diff --git a/mcs/class/Mono.Data.Tds/Mono.Data.Tds_test.dll.sources b/mcs/class/Mono.Data.Tds/Mono.Data.Tds_test.dll.sources
+index 5cefc19..cab8636 100644
+--- a/mcs/class/Mono.Data.Tds/Mono.Data.Tds_test.dll.sources
++++ b/mcs/class/Mono.Data.Tds/Mono.Data.Tds_test.dll.sources
+@@ -1 +1,2 @@
+ bug-4786.cs
++ConnLifetime.cs
+diff --git a/mcs/class/Mono.Data.Tds/Test/ConnLifetime.cs b/mcs/class/Mono.Data.Tds/Test/ConnLifetime.cs
+new file mode 100644
+index 0000000..cd964c9
+--- /dev/null
++++ b/mcs/class/Mono.Data.Tds/Test/ConnLifetime.cs
+@@ -0,0 +1,113 @@
++//
++// ConnLifetime.cs
++//
++// Authors:
++//      James Lewis <james.lewis@7digital.com>
++//      Andres G. Aragoneses <andres@7digital.com>
++//
++// Copyright (C) 2012 7digital Media Ltd (http://www.7digital.com)
++//
++// Permission is hereby granted, free of charge, to any person obtaining
++// a copy of this software and associated documentation files (the
++// "Software"), to deal in the Software without restriction, including
++// without limitation the rights to use, copy, modify, merge, publish,
++// distribute, sublicense, and/or sell copies of the Software, and to
++// permit persons to whom the Software is furnished to do so, subject to
++// the following conditions:
++//
++// The above copyright notice and this permission notice shall be
++// included in all copies or substantial portions of the Software.
++//
++// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
++// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
++// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
++// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
++// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++//
++
++using System;
++
++using NUnit.Framework;
++
++using Mono.Data.Tds.Protocol;
++
++
++namespace Mono.Data.Tds.Tests
++{
++
++	[TestFixture]
++	public class ConnLifetime
++	{
++		[Test]
++		public void LifeTimeIsTakenInAccount ()
++		{
++			var SMALLEST_LIFETIME_TO_TEST = 1;
++			var WAIT_TO_MAKE_LIFETIME_PASSED = 2;
++
++			TdsConnectionPoolManager sqlConnectionPools = new FakeConnectionPoolManager ();
++			TdsConnectionInfo info = new TdsConnectionInfo ("dummy", 0, 0, 0,
++			                                               1 /*minpoolsize*/,
++			                                               1 /*maxpoolsize*/,
++			                                               SMALLEST_LIFETIME_TO_TEST/*lifetime*/);
++
++			TdsConnectionPool pool = sqlConnectionPools.GetConnectionPool ("test",info);
++			Mono.Data.Tds.Protocol.Tds tds, tds2 = null;
++
++			tds = pool.GetConnection();
++
++			System.Threading.Thread.Sleep (TimeSpan.FromSeconds (WAIT_TO_MAKE_LIFETIME_PASSED));
++			pool.ReleaseConnection (tds);
++
++			tds2 = pool.GetConnection ();
++
++
++			Assert.IsFalse (object.ReferenceEquals (tds, tds2));
++			pool.ReleaseConnection(tds2);
++		}
++
++		class FakeConnectionPoolManager : TdsConnectionPoolManager {
++
++			internal FakeConnectionPoolManager () : base (Mono.Data.Tds.Protocol.TdsVersion.tds90)
++			{
++			}
++
++			public override Mono.Data.Tds.Protocol.Tds CreateConnection (TdsConnectionInfo info)
++			{
++	 			return new FakeTds (info.LifeTime);
++			}
++		}
++
++		class FakeTds : Mono.Data.Tds.Protocol.Tds {
++			internal FakeTds(int lifetime) : base (null, 0, 0, 0, lifetime, Mono.Data.Tds.Protocol.TdsVersion.tds90){
++			}
++
++			public override bool Connect (TdsConnectionParameters connectionParameters)
++			{
++				throw new NotImplementedException ();
++			}
++
++			protected override void ProcessColumnInfo ()
++			{
++				throw new NotImplementedException ();
++			}
++
++			protected override void InitComm (int port, int timeout)
++			{
++				//do nothing, not relevant for the test
++			}
++
++			public override bool IsConnected {
++				get { return true; }
++				set { }
++			}
++
++			public override void Disconnect ()
++			{
++				// do nothing, not relevant for the test
++			}
++		}
++	}
++}
++
+diff --git a/mcs/class/Mono.Data.Tds/Test/bug-4786.cs b/mcs/class/Mono.Data.Tds/Test/bug-4786.cs
+index 9bb7edf..e8436a7 100644
+--- a/mcs/class/Mono.Data.Tds/Test/bug-4786.cs
++++ b/mcs/class/Mono.Data.Tds/Test/bug-4786.cs
+@@ -73,7 +73,7 @@ namespace bug4786test
+ 	TdsConnectionInfo info=
+ 		new TdsConnectionInfo(SERVER/*dummyhost*/,1433/*port*/,
+ 		8192/*pktsize*/,15/*timeout*/,0/*minpoolsize*/,
+-		100/*maxpoolsize*/);
++		100/*maxpoolsize*/, 0/*lifetime*/);
+ 	pool=sqlConnectionPools.GetConnectionPool("test",info);
+ 	Tds tds=null;
+ 
+@@ -93,7 +93,7 @@ namespace bug4786test
+ 
+ 	info=new TdsConnectionInfo(SERVER/*dummyhost*/,1433/*port*/,
+ 		8192/*pktsize*/,15/*timeout*/,0/*minpoolsize*/,
+-		100/*maxpoolsize*/);
++		100/*maxpoolsize*/, 0/*lifetime*/);
+ 
+ 	pool=sqlConnectionPools.GetConnectionPool("test",info);
+ 
+diff --git a/mcs/class/System.Data/System.Data.SqlClient/SqlConnection.cs b/mcs/class/System.Data/System.Data.SqlClient/SqlConnection.cs
+index 24c08eb..2c779e6 100644
+--- a/mcs/class/System.Data/System.Data.SqlClient/SqlConnection.cs
++++ b/mcs/class/System.Data/System.Data.SqlClient/SqlConnection.cs
+@@ -81,6 +81,7 @@ namespace System.Data.SqlClient
+ #endif
+ 		const int MIN_PACKETSIZE = 512;
+ 		const int DEFAULT_CONNECTIONTIMEOUT = 15;
++		const int DEFAULT_CONNECTIONLIFETIME = 0;
+ 		const int DEFAULT_MAXPOOLSIZE = 100;
+ 		const int MIN_MAXPOOLSIZE = 1;
+ 		const int DEFAULT_MINPOOLSIZE = 0;
+@@ -99,6 +100,7 @@ namespace System.Data.SqlClient
+ 		
+ 		TdsConnectionParameters parms;
+ 		bool connectionReset;
++		int connectionLifeTime;
+ 		bool pooling;
+ 		string dataSource;
+ 		int connectionTimeout;
+@@ -539,14 +541,14 @@ namespace System.Data.SqlClient
+ 				if (!pooling) {
+ 					if(!ParseDataSource (dataSource, out port, out serverName))
+ 						throw new SqlException(20, 0, "SQL Server does not exist or access denied.",  17, "ConnectionOpen (Connect()).", dataSource, parms.ApplicationName, 0);
+-					tds = new Tds80 (serverName, port, PacketSize, ConnectionTimeout);
++					tds = new Tds80 (serverName, port, PacketSize, ConnectionTimeout, 0);
+ 					tds.Pooling = false;
+ 				}
+ 				else {
+ 					if(!ParseDataSource (dataSource, out port, out serverName))
+ 						throw new SqlException(20, 0, "SQL Server does not exist or access denied.",  17, "ConnectionOpen (Connect()).", dataSource, parms.ApplicationName, 0);
+ 					
+- 					TdsConnectionInfo info = new TdsConnectionInfo (serverName, port, packetSize, ConnectionTimeout, minPoolSize, maxPoolSize);
++					TdsConnectionInfo info = new TdsConnectionInfo (serverName, port, packetSize, ConnectionTimeout, minPoolSize, maxPoolSize, connectionLifeTime);
+ 					pool = sqlConnectionPools.GetConnectionPool (connectionString, info);
+ 					tds = pool.GetConnection ();
+ 				}
+@@ -797,6 +799,7 @@ namespace System.Data.SqlClient
+ 					connectionTimeout = tmpTimeout;
+ 				break;
+ 			case "connection lifetime" :
++				connectionLifeTime = ConvertToInt32 ("connection lifetime", value, 0);
+ 				break;
+ 			case "connection reset" :
+ 				connectionReset = ConvertToBoolean ("connection reset", value, true);
+diff --git a/configure.in b/configure.in
+index 48a6a46..42c317c 100644
+--- a/configure.in
++++ b/configure.in
+@@ -1,7 +1,7 @@
+ # Process this file with autoconf to produce a configure script.
+ #AC_PREREQ([2.62])
+ 
+-AC_INIT(mono, [3.0.3],
++AC_INIT(mono, [3.0.3.1],
+         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
+ 
+ AC_CONFIG_SRCDIR([README])
+diff --git a/mono/mini/driver.c b/mono/mini/driver.c
+index 7a4c4de..c918d52 100644
+--- a/mono/mini/driver.c
++++ b/mono/mini/driver.c
+@@ -1457,7 +1457,7 @@ mono_main (int argc, char* argv[])
+ 			char *build = mono_get_runtime_build_info ();
+ 			char *gc_descr;
+ 
+-			g_print ("Mono JIT compiler version %s\nCopyright (C) 2002-2012 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com\n", build);
++			g_print ("Mono JIT compiler version %s\nCopyright (C) 2002-2012 Novell, Inc, Xamarin Inc, 7digital Media Ltd and Contributors. www.mono-project.com\n", build);
+ 			g_free (build);
+ 			g_print (info);
+ 			gc_descr = mono_gc_get_description ();
+-- 
+1.7.10.4
+

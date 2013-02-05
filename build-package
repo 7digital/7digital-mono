@@ -20,9 +20,8 @@ TARGET_DIR=`pwd`/mono
 # this patch has been committed upstream and will be part of 3.0.4 out of the box; we need it now for 3.0.3 though so it becomes 3.0.3.1
 if [ "$MONO_VERSION" = "3.0.3" ]
 then
-	git clone git://gitorious.7digital.local/sevendigital-api-inbox/deployment.git
 	echo --patching mono
-	cd $MONO_DIR && patch -p1 -i ../deployment/bootstrap/0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd .. && rm -rf deployment
+	cd $MONO_DIR && patch -p1 -i 0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd ..
 fi
 
 cd $MONO_DIR
