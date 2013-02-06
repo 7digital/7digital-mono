@@ -21,7 +21,7 @@ TARGET_DIR=`pwd`/mono
 if [ "$MONO_VERSION" = "3.0.3" ]
 then
 	echo --patching mono
-	cd $MONO_DIR && patch -p1 -i 0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd ..
+	cd $MONO_DIR && patch -p1 -i ../0001-System.Data.SqlClient-Support-for-Connection-Lifetim.patch && cd ..
 fi
 
 cd $MONO_DIR
