@@ -11,7 +11,7 @@ die () {
 MONO_VERSION=$1
 MONO_DIR="mono-$MONO_VERSION"
 
-rm -rf $MONO_DIR
+rm -rf $MONO_DIR*
 
 echo "Downloading $MONO_VERSION"
 
