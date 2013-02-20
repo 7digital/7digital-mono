@@ -30,16 +30,10 @@ fi
 cd $MONO_DIR
 pwd
 echo $TARGET_DIR
-./configure --prefix=$TARGET_DIR
+./configure --prefix=/usr
 make
-make install
+make install DESTDIR="$TARGET_DIR"
 cd -
-
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/mcs
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/xbuild
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console2
-sed -i s,`pwd`/mono,/usr,g $TARGET_DIR/bin/nunit-console4
 
 dpkg-buildpackage -uc -us -b
 
