@@ -8,6 +8,10 @@ Get the dependencies required to build mono
 
  apt-get build-dep monodevelop
 
+And the ones required to build packages:
+
+ apt-get install dpkg-dev debhelper
+
 Clone
  git@github.com:7digital/7digital-mono.git
 
