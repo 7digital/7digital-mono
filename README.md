@@ -6,11 +6,7 @@ A custom deb package for squeeze and wheezy
 This should be done on a debian instance running squeeze or wheezy
 Get the dependencies required to build mono
 
- apt-get build-dep mono
-
-And the ones required to build packages:
-
- apt-get install dpkg-dev debhelper
+ apt-get build-dep mono-runtime
 
 Clone
  git@github.com:7digital/7digital-mono.git
