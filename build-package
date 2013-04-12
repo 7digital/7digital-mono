@@ -8,7 +8,7 @@ die () {
 
 [ "$#" -eq 1 ] || die "Please specify the version of Mono you want to build as the argument. (Check the tarball list here: http://download.mono-project.com/sources/mono/)"
 
-which fpm > /dev/null || (echo "Please install fpm" && exit 1)
+which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
 
 if mono --version; then
 	echo "Mono is installed locally; please uninstall first" && exit 1
