@@ -1,0 +1,48 @@
+#! /bin/bash
+set -e
+
+die () {
+    echo >&2 "$@"
+    exit 1
+}
+
+[ "$#" -eq 1 ] || die "Please specify the version of XSP you want to build as the argument. (Check the tags here: https://github.com/mono/xsp)"
+
+which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
+
+which git > /dev/null || (echo "Please install git" && exit 1)
+
+which mono > /dev/null || (echo "Please install mono 3.x" && exit 1)
+
+WORK_DIR=/tmp/7digital-xsp-work
+rm -rf $WORK_DIR
+mkdir $WORK_DIR
+cd $WORK_DIR
+
+XSP_VERSION=$1
+XSP_DIR="mono-$XSP_VERSION"
+
+echo "Downloading $XSP_VERSION"
+
+git clone https://github.com/mono/xsp.git
+XSP_DIR="$WORK_DIR/xsp"
+cd "$XSP_DIR"
+git checkout $XSP_VERSION
+
+TARGET_DIR="$WORK_DIR/destdir"
+mkdir $TARGET_DIR
+
+./autogen.sh --prefix=/usr
+make
+make install DESTDIR="$TARGET_DIR"
+cd $WORK_DIR
+
+fpm -s dir \
+    -t deb \
+    -n 7digital-xsp \
+    -v $XSP_VERSION \
+    -C $TARGET_DIR \
+    usr/bin usr/lib usr/share
+
+echo "Done. Your package should be ready in $WORK_DIR"
+
