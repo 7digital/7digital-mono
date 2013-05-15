@@ -14,8 +14,8 @@ Clone git@github.com:7digital/7digital-mono.git
 
 Run
  
- ./build-mono-package 3.0.10
- ./build-xsp-package 3.0.10
+* ./build-mono-package.bash 3.0.10
+* ./build-xsp-package.bash 3.0.10
 
 where 3.0.10 can be any version available to download:
 
