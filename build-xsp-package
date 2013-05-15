@@ -8,11 +8,11 @@ die () {
 
 [ "$#" -eq 1 ] || die "Please specify the version of XSP you want to build as the argument. (Check the tags here: https://github.com/mono/xsp)"
 
-which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
+which fpm > /dev/null || die "Please install fpm (from gem, not apt-get)"
 
-which git > /dev/null || (echo "Please install git" && exit 1)
+which git > /dev/null || die "Please install git"
 
-which mono > /dev/null || (echo "Please install mono 3.x" && exit 1)
+which mono > /dev/null || die "Please install mono 3.x"
 
 WORK_DIR=/tmp/7digital-xsp-work
 rm -rf $WORK_DIR
