@@ -22,6 +22,10 @@ cd $WORK_DIR
 XSP_VERSION=$1
 XSP_DIR="mono-$XSP_VERSION"
 
+SEVEND_VERSION="701"
+XSP7D_VERSION=$XSP_VERSION'.'$SEVEND_VERSION
+XSP7D_NAME="xsp-7d"
+
 echo "Downloading $XSP_VERSION"
 
 git clone https://github.com/mono/xsp.git
@@ -46,8 +50,8 @@ cd $WORK_DIR
 
 fpm -s dir \
     -t deb \
-    -n 7digital-xsp \
-    -v $XSP_VERSION \
+    -n $XSP7D_NAME \
+    -v $XSP7D_VERSION \
     -C $TARGET_DIR \
     usr/bin usr/lib usr/share
 
