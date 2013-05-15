@@ -1,29 +1,27 @@
 7digital-mono
 =============
 
-A custom deb package for squeeze and wheezy
+Custom mono deb packages (xsp, mono) for debian (tested with squeeze and wheezy).
 
-This should be done on a debian instance running squeeze or wheezy
+This should be run on a debian instance running the version of debian where you will install the deb.
 
-Get fpm (we tested with version 0.4.29), and the dependencies required to build mono
+Get fpm (we tested with version 0.4.29), and the dependencies required to build mono:
 
  apt-get build-dep mono-runtime
  gem install fpm
 
-Clone
- git@github.com:7digital/7digital-mono.git
-
+Clone git@github.com:7digital/7digital-mono.git
 
 Run
  
- ./build-package 3.0.xx  
+ ./build-mono-package 3.0.10
+ ./build-xsp-package 3.0.10
 
-where 3.0.xx is a version avaiable to download from http://download.mono-project.com/sources/mono/
+where 3.0.10 can be any version available to download:
 
-Wait till the build finishes.
+* Mono: tarball from http://download.mono-project.com/sources/mono/
+* XSP: git tag from https://github.com/mono/xsp
 
-This will create a .deb package in the parent directory (one level up)
+Wait till the build finishes. This will create a .deb package.
 
-Add the .deb package to your apt repository
-
-The package will now be available as "7digital-mono"
+Add the .deb package to your apt repository.
