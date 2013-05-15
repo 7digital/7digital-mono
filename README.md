@@ -15,9 +15,9 @@ Clone git@github.com:7digital/7digital-mono.git
 Run
  
 * ./build-mono-package.bash 3.0.10
-* ./build-xsp-package.bash 3.0.10
+* ./build-xsp-package.bash 3.0.11
 
-where 3.0.10 can be any version available to download:
+where 3.0.x can be any version available to download:
 
 * Mono: tarball from http://download.mono-project.com/sources/mono/
 * XSP: git tag from https://github.com/mono/xsp
