@@ -31,13 +31,7 @@ git clone https://github.com/mono/xsp.git
 XSP_DIR="$WORK_DIR/xsp"
 cd "$XSP_DIR"
 
-# TODO: get rid of this if when the tag with this commit is created
-if [ "$XSP_VERSION" = "3.0.10" ]
-then
-	git checkout 4587438369691b9b3e8415e1f113aa98b57d1fde
-else
-	git checkout $XSP_VERSION
-fi
+git checkout $XSP_VERSION
 
 TARGET_DIR="$WORK_DIR/destdir"
 mkdir $TARGET_DIR
