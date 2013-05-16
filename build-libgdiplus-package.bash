@@ -20,7 +20,7 @@ LIB_GDI_PLUS_NAME="libgdiplus-7d"
 echo "Downloading $LIB_GDI_PLUS_VERSION"
 wget "http://download.mono-project.com/sources/libgdiplus/libgdiplus-$LIB_GDI_PLUS_VERSION.tar.bz2"
 
-tar -xvjf 'libgdiplus-$LIB_GDI_PLUS_VERSION.tar.bz2'
+tar -xvjf "libgdiplus-$LIB_GDI_PLUS_VERSION.tar.bz2"
 cd libgdiplus-$LIB_GDI_PLUS_VERSION 
 
 ./configure
