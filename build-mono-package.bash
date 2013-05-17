@@ -23,6 +23,10 @@ cd $WORK_DIR
 MONO_VERSION=$1
 MONO_DIR="mono-$MONO_VERSION"
 
+SEVEND_VERSION="701"
+MONO7D_VERSION=$MONO_VERSION'.'$SEVEND_VERSION
+MONO7D_NAME="mono-7d"
+
 echo "Downloading $MONO_VERSION"
 wget http://download.mono-project.com/sources/mono/mono-$MONO_VERSION.tar.bz2
 
@@ -39,8 +43,8 @@ cd $WORK_DIR
 
 fpm -s dir \
     -t deb \
-    -n 7digital-mono \
-    -v $MONO_VERSION \
+    -n $MONO7D_NAME \
+    -v $MONO7D_VERSION \
     -C $TARGET_DIR \
     -d "libglib2.0-dev (>= 0)" \
     usr/bin usr/lib usr/share
