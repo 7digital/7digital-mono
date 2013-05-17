@@ -42,7 +42,7 @@ fpm -d "libpng-dev" \
     -t deb \
     -n $LIB_GDI_PLUS_NAME \
     -C $TARGET_DIR \
-    usr/bin usr/lib usr/share
+    usr/lib
 
 
 echo "Done. Your package should be ready in $WORK_DIR"
