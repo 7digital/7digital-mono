@@ -6,7 +6,7 @@ die () {
     exit 1
 }
 
-[ "$#" -eq 1 ] || die "Please specify the version of libgdiplus you want to build as the argument. (Check the tags here: http://download.mono-project.com/sources/libgdiplus/)"
+[ "$#" -eq 1 ] || die "Please specify the version of libgdiplus you want to build as the argument. (Check the versions in the tarball list here: http://download.mono-project.com/sources/libgdiplus/)"
 
 
 WORK_DIR=/tmp/7digital-libgdiplus-work

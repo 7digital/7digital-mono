@@ -6,7 +6,7 @@ die () {
     exit 1
 }
 
-[ "$#" -eq 1 ] || die "Please specify the version of Mono you want to build as the argument. (Check the tarball list here: http://download.mono-project.com/sources/mono/)"
+[ "$#" -eq 1 ] || die "Please specify the version of Mono you want to build as the argument. (Check the versions in the tarball list here: http://download.mono-project.com/sources/mono/)"
 
 which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
 
