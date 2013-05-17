@@ -25,7 +25,7 @@ cd libgdiplus-$LIB_GDI_PLUS_VERSION
 
 TARGET_DIR="$WORK_DIR/destdir"
 mkdir $TARGET_DIR
-./configure
+./configure --prefix=/usr
 make
 make install DESTDIR="$TARGET_DIR"
 cd $WORK_DIR
@@ -42,7 +42,7 @@ fpm -d "libpng-dev" \
     -t deb \
     -n $LIB_GDI_PLUS_NAME \
     -C $TARGET_DIR \
-    usr/local
+    usr/bin usr/lib usr/share
 
 
 echo "Done. Your package should be ready in $WORK_DIR"
