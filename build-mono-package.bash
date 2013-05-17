@@ -24,10 +24,9 @@ MONO_VERSION=$1
 MONO_DIR="mono-$MONO_VERSION"
 
 echo "Downloading $MONO_VERSION"
-
 wget http://download.mono-project.com/sources/mono/mono-$MONO_VERSION.tar.bz2
 
-tar -jxf mono-$MONO_VERSION.tar.gz
+tar -jxf mono-$MONO_VERSION.tar.bz2
 TARGET_DIR="$WORK_DIR/destdir"
 mkdir $TARGET_DIR
 
