@@ -15,6 +15,8 @@ mkdir $WORK_DIR
 cd $WORK_DIR
 
 LIB_GDI_PLUS_VERSION=$1
+SEVEND_VERSION="701"
+LIB_GDI_PLUS7D_VERSION=$LIB_GDI_PLUS_VERSION'.'$SEVEND_VERSION
 LIB_GDI_PLUS_NAME="libgdiplus-7d"
 
 echo "Downloading $LIB_GDI_PLUS_VERSION"
@@ -41,6 +43,7 @@ fpm -d "libpng-dev" \
     -s dir \
     -t deb \
     -n $LIB_GDI_PLUS_NAME \
+	-v $LIB_GDI_PLUS7D_VERSION \
     -C $TARGET_DIR \
     usr/lib
 
