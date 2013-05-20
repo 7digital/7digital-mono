@@ -47,7 +47,7 @@ fpm -s dir \
     -v $MONO7D_VERSION \
     -C $TARGET_DIR \
     -d "libglib2.0-dev (>= 0)" \
-    usr/bin usr/lib usr/share
+    usr/bin usr/lib usr/share usr/include usr/etc
 
 echo "Done. Your package should be ready in $WORK_DIR"
 
