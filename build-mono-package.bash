@@ -20,11 +20,18 @@ mkdir $WORK_DIR
 cd $WORK_DIR
 
 MONO_VERSION=$1
-MONO_DIR="mono-$MONO_VERSION"
-
 SEVEND_VERSION="701"
 MONO7D_VERSION=$MONO_VERSION'.'$SEVEND_VERSION
 MONO7D_NAME="mono-7d"
+
+PATCH=
+if [ $MONO_VERSION = "3.0.6.1" ]; then
+	# https://bugzilla.xamarin.com/show_bug.cgi?id=5598
+	PATCH="ada85c64adcbd260c7e5ee284c628d0f41ad4ca6.patch"
+	MONO_VERSION="3.0.6"
+fi
+
+MONO_DIR="mono-$MONO_VERSION"
 
 echo "Downloading $MONO_VERSION"
 wget http://download.mono-project.com/sources/mono/mono-$MONO_VERSION.tar.bz2
@@ -34,6 +41,13 @@ TARGET_DIR="$WORK_DIR/destdir"
 mkdir $TARGET_DIR
 
 cd "$WORK_DIR/$MONO_DIR"
+
+if [ $PATCH != "" ]; then
+	wget https://github.com/mono/mono/commit/$PATCH
+
+	#it doesn't matter that it fails, because the only conflict there is, is in the csproj file
+	patch -p1 -i "$PATCH" || true
+fi
 
 ./configure --prefix=/usr
 make
