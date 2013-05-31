@@ -10,10 +10,9 @@ die () {
 
 which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
 
-if mono --version; then
+if mono --version > /dev/null 2>&1; then
 	echo "Mono is installed locally; please uninstall first" && exit 1
 fi
-
 
 WORK_DIR=/tmp/7digital-mono-work
 rm -rf $WORK_DIR
