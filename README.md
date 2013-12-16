@@ -7,10 +7,13 @@ This should be run on a debian instance running the version of debian where you 
 
 Get fpm (we tested with version 0.4.29), and the dependencies required to build mono:
 
- apt-get build-dep mono-runtime
- gem install fpm
+```
+sudo apt-get build-dep install ruby ruby-dev rubygems
+sudo gem update
+sudo gem install fpm
+```
 
-Clone git@github.com:7digital/7digital-mono.git
+Clone [https://github.com/7digital/7digital-mono.git](https://github.com/7digital/7digital-mono.git)
 
 Run
  
