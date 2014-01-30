@@ -10,9 +10,9 @@ die () {
 
 which fpm > /dev/null || (echo "Please install fpm (from gem, not apt-get)" && exit 1)
 
-if mono --version > /dev/null 2>&1; then
-	echo "Mono is installed locally; please uninstall first" && exit 1
-fi
+#if mono --version > /dev/null 2>&1; then
+#	echo "Mono is installed locally; please uninstall first" && exit 1
+#fi
 
 WORK_DIR=/tmp/7digital-mono-work
 rm -rf $WORK_DIR
@@ -27,15 +27,15 @@ MONO7D_VERSION=$MONO_VERSION'.'$SEVEND_VERSION
 MONO7D_NAME="mono-7d"
 
 echo "Downloading $MONO_VERSION"
-wget http://download.mono-project.com/sources/mono/mono-$MONO_VERSION.tar.bz2
+git clone -b app-config-fix git://github.com/7digital/mono.git --depth 1
+cd mono
+git submodule init
+git submodule update
 
-tar -jxf mono-$MONO_VERSION.tar.bz2
 TARGET_DIR="$WORK_DIR/destdir"
 mkdir $TARGET_DIR
 
-cd "$WORK_DIR/$MONO_DIR"
-
-./configure --prefix=/usr
+./autogen.sh --prefix=/usr
 make
 make install DESTDIR="$TARGET_DIR"
 cd $WORK_DIR
