@@ -1,8 +1,13 @@
 #!/bin/bash
 set -e
 
+MONO_VERSION=$1
+
+rm -rf mono
+rm -rf out
+
 mkdir -p out
-git clone -b app-config-fix git://github.com/7digital/mono.git --depth 1
+git clone -b mono-"$MONO_VERSION" git://github.com/mono/mono.git --depth 1
 cd mono
 
 ./autogen.sh --prefix=/usr
@@ -13,7 +18,7 @@ fpm -s dir \
     -t deb \
     -C out \
     --name "mono-7d" \
-    --version 3.2.6 \
+    --version  "$MONO_VERSION" \
     --iteration "7$BUILD_NUMBER" \
     --depends "libglib2.0-dev (>= 0)" \
     --deb-user root \
