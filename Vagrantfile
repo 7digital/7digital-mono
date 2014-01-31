@@ -10,14 +10,14 @@ apt-get -y install git
 apt-get -y install mono-gmcs
 gem update
 gem install fpm --no-ri --no-rdoc
-cd /vagrant
-sh build-mono-package.bash "$1"
+cd ~vagrant
+sh /vagrant/build-mono-package.bash "$1"
+cp *.deb /vagrant
 EOF
 
 VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "debian-wheezy-x64-7digital"
-  config.vm.box_url = "http://sam.nix.sys.7d/vagrant/debian-wheezy-x64-7digital.box"
   config.vm.provision "shell", inline: $provision, args: "#{ENV['MONO_VERSION']}"
 end
