@@ -7,9 +7,10 @@ rm -rf mono
 rm -rf out
 
 mkdir -p out
-git clone -b mono-"$MONO_VERSION" git://github.com/mono/mono.git --depth 1
+git clone git://github.com/mono/mono.git
 
 cd mono
+git checkout mono-"$MONO_VERSION"
 ./autogen.sh --prefix=/usr
 make
 make install DESTDIR="`readlink -f ../out`"
