@@ -2,6 +2,7 @@
 # vi: set ft=ruby :
 
 $provision = <<EOF
+export BUILD_NUMBER=#{ENV['BUILD_NUMBER']}
 apt-get update
 apt-get -y upgrade
 apt-get -y install autoconf libtool automake gettext
