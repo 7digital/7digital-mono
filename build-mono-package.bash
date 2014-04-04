@@ -12,6 +12,8 @@ git clone git://github.com/mono/mono.git
 cd mono
 git checkout mono-"$MONO_VERSION"
 ./autogen.sh --prefix=/usr
+make get-monolite-latest
+make EXTERNAL_MCS="${PWD}/mcs/class/lib/monolite/gmcs.exe"
 make
 make install DESTDIR="`readlink -f ../out`"
 cd ..

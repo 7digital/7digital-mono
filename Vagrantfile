@@ -8,7 +8,6 @@ apt-get -y upgrade
 apt-get -y install autoconf libtool automake gettext
 apt-get -y install ruby ruby-dev rubygems
 apt-get -y install git
-apt-get -y install mono-gmcs
 gem update
 gem install fpm --no-ri --no-rdoc
 cd ~vagrant
